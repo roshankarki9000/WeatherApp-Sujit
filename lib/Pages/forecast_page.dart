@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
+import 'package:weatherapp/Pages/forcast_page2.dart';
 import 'package:weatherapp/provider/weather_provider.dart';
+import 'package:weatherapp/weather.dart';
 
 class CurrentWeatherPage extends ConsumerWidget {
   const CurrentWeatherPage({super.key});
@@ -18,73 +20,56 @@ class CurrentWeatherPage extends ConsumerWidget {
       body: weatherAsync.when(
         data: (data) {
           // Defensive parsing
-          final currentTemp = _asDouble(data, [
+          double? currentTemp = _asDouble(data, [
             "weather",
             "current",
             "temperature_2m",
           ]);
-          final maxTemp =
+          double? maxTemp =
               _asListDouble(data, [
                 "weather",
                 "daily",
                 "temperature_2m_max",
               ])?.firstOrNull;
-          final minTemp =
+          double? minTemp =
               _asListDouble(data, [
                 "weather",
                 "daily",
                 "temperature_2m_min",
               ])?.firstOrNull;
+          final location = data["location"]?.toString() ?? "—";
 
-          // Hourly arrays (full lists from API)
-          final hourlyTimesAll =
-              _asListString(data, ["weather", "hourly", "time"]) ?? const [];
-          final hourlyTempsAll =
-              _asListDouble(data, ["weather", "hourly", "temperature_2m"]) ??
+          final hourlyTimes =
+              _asListString(data, [
+                "weather",
+                "hourly",
+                "time",
+              ])?.take(25).toList() ??
               const [];
-          final hourlyCodesAll =
-              _asListInt(data, ["weather", "hourly", "weathercode"]) ??
+          final hourlyTemp =
+              _asListDouble(data, [
+                "weather",
+                "hourly",
+                "temperature_2m",
+              ])?.take(25).toList() ??
               const [];
 
-          // Build a 24-hour window starting from now
+          // Formatted date
           final now = DateTime.now();
-          final startIndex = _indexOfClosestHour(hourlyTimesAll, now) ?? 0;
-          final endIndex = (startIndex + 12).clamp(
-            0,
-            _min3(
-              hourlyTimesAll.length,
-              hourlyTempsAll.length,
-              hourlyCodesAll.length,
-            ),
-          );
-
-          final hourlyTimes = hourlyTimesAll.sublist(startIndex, endIndex);
-          final hourlyTemps = hourlyTempsAll.sublist(startIndex, endIndex);
-          final hourlyCodes = hourlyCodesAll.sublist(startIndex, endIndex);
-
           final dayLabel = "Today";
           final dateLabel = DateFormat("MMMM, d").format(now); // e.g., July, 21
-
-          // For the header icon use current weathercode if available, else first hourly
-          final currentCode =
-              _asInt(data, ["weather", "current", "weathercode"]) ??
-              (hourlyCodes.isNotEmpty ? hourlyCodes.first : null);
-          final currentAsset = assetForWmoCode(
-            currentCode ?? 0,
-            isNight: isNightNow(now),
-          );
 
           return Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF0B0D3B),
-                  Color(0xFF3A1F87),
-                  Color(0xFF8A2DD8),
-                  Color(0xFFE45BD8),
+                  Color(0xFF0B0D3B), // deep navy blue
+                  Color(0xFF3A1F87), // violet
+                  Color(0xFF8A2DD8), // purple-pink mix
+                  Color(0xFFE45BD8), // soft magenta near bottom
                 ],
                 begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                end: Alignment(-0.9, 1.7),
               ),
             ),
             child: SafeArea(
@@ -96,9 +81,13 @@ class CurrentWeatherPage extends ConsumerWidget {
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       children: [
+                        // Optional top bar (time/icons are part of OS; we keep spacing)
                         const SizedBox(height: 8),
-                        // Weather icon (based on current weather)
-                        Image.asset(currentAsset, height: 120),
+                        // Weather icon
+                        Image.asset(
+                          'assets/images/weather_icon.png',
+                          height: 120,
+                        ),
                         const SizedBox(height: 12),
                         // Temperature
                         Text(
@@ -125,10 +114,12 @@ class CurrentWeatherPage extends ConsumerWidget {
                         Text(
                           "Max: ${_fmtDeg(maxTemp)}   Min: ${_fmtDeg(minTemp)}",
                           style: textTheme.titleSmall?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
                         const SizedBox(height: 16),
+                        // Middle illustration (house)
+                        // Replace with your asset; using same as top for placeholder
                         Image.asset(
                           'assets/images/winter_house.png',
                           height: 150,
@@ -144,8 +135,7 @@ class CurrentWeatherPage extends ConsumerWidget {
                       leftTitle: dayLabel,
                       rightTitle: dateLabel,
                       hourlyTimes: hourlyTimes,
-                      hourlyTemps: hourlyTemps,
-                      hourlyCodes: hourlyCodes,
+                      hourlyTemps: hourlyTemp,
                     ),
                   ),
 
@@ -183,25 +173,17 @@ class _ForecastCard extends StatelessWidget {
   final String rightTitle;
   final List<String> hourlyTimes;
   final List<double> hourlyTemps;
-  final List<int> hourlyCodes;
 
   const _ForecastCard({
     required this.leftTitle,
     required this.rightTitle,
     required this.hourlyTimes,
     required this.hourlyTemps,
-    required this.hourlyCodes,
   });
 
   @override
   Widget build(BuildContext context) {
     final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
-
-    final count = _min3(
-      hourlyTimes.length,
-      hourlyTemps.length,
-      hourlyCodes.length,
-    );
 
     return Container(
       decoration: BoxDecoration(
@@ -245,23 +227,13 @@ class _ForecastCard extends StatelessWidget {
             height: 108,
             child: ListView.separated(
               scrollDirection: Axis.horizontal,
-              itemCount: count,
+              itemCount: _min(hourlyTimes.length, hourlyTemps.length),
               padding: const EdgeInsets.symmetric(horizontal: 4),
               separatorBuilder: (_, __) => const SizedBox(width: 8),
               itemBuilder: (context, index) {
-                final iso = hourlyTimes[index];
+                final t = _extractHour(hourlyTimes[index]);
                 final temp = hourlyTemps[index];
-                final code = hourlyCodes[index];
-
-                final dt = DateTime.tryParse(iso) ?? DateTime.now();
-                final timeLabel = DateFormat('HH:mm').format(dt);
-                final asset = assetForWmoCode(code, isNight: isNightNow(dt));
-
-                return _HourlyTile(
-                  time: timeLabel,
-                  temp: temp,
-                  assetPath: asset,
-                );
+                return _HourlyTile(time: t, temp: temp);
               },
             ),
           ),
@@ -274,24 +246,19 @@ class _ForecastCard extends StatelessWidget {
 class _HourlyTile extends StatelessWidget {
   final String time;
   final double temp;
-  final String assetPath;
 
-  const _HourlyTile({
-    required this.time,
-    required this.temp,
-    required this.assetPath,
-  });
+  const _HourlyTile({required this.time, required this.temp});
 
   @override
   Widget build(BuildContext context) {
     final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
 
     return Container(
-      width: 78,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(16),
-      ),
+      width: 70,
+      // decoration: BoxDecoration(
+      //   color: Colors.white.withOpacity(0.15),
+      //   borderRadius: BorderRadius.circular(16),
+      // ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -303,7 +270,8 @@ class _HourlyTile extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          Image.asset(assetPath, width: 28, height: 28),
+          // Placeholder weather glyph (use your own asset or map by code)
+          Icon(Icons.cloud, color: Colors.white, size: 24),
           Text(
             time,
             style: textTheme.bodySmall?.copyWith(
@@ -328,12 +296,39 @@ class _BottomPillBar extends StatelessWidget {
         border: Border.all(color: Colors.white.withOpacity(0.2)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: const Row(
+      child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Icon(Icons.location_on_outlined, color: Colors.white),
-          Icon(Icons.add_circle_outline_rounded, color: Colors.white),
-          Icon(Icons.menu_rounded, color: Colors.white),
+          IconButton(
+            icon: const Icon(Icons.location_on_outlined, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ForecastPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(
+              Icons.add_circle_outline_rounded,
+              color: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ForecastPage()),
+              );
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.menu_rounded, color: Colors.white),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => Weather()),
+              );
+            },
+          ),
         ],
       ),
     );
@@ -345,32 +340,9 @@ class _BottomPillBar extends StatelessWidget {
 String _fmtDeg(double? v) => v == null ? "—°" : "${v.round()}°";
 
 int _min(int a, int b) => a < b ? a : b;
-int _min3(int a, int b, int c) => _min(_min(a, b), c);
-
-// Find index of the hour in hourlyTimes that is >= now, fallback to closest past hour
-int? _indexOfClosestHour(List<String> hourlyIso, DateTime now) {
-  if (hourlyIso.isEmpty) return null;
-
-  // Parse all once
-  final dts = hourlyIso.map((s) => DateTime.tryParse(s)).toList();
-  // Find first index >= now
-  for (int i = 0; i < dts.length; i++) {
-    final dt = dts[i];
-    if (dt != null && !dt.isBefore(now)) {
-      return i;
-    }
-  }
-  // If none in future, find last past
-  for (int i = dts.length - 1; i >= 0; i--) {
-    final dt = dts[i];
-    if (dt != null && !dt.isAfter(now)) {
-      return i;
-    }
-  }
-  return 0;
-}
 
 String _extractHour(String iso) {
+  // Expecting "YYYY-MM-DDTHH:MM"
   if (iso.contains("T")) {
     final hhmm = iso.split("T").last;
     final parts = hhmm.split(":");
@@ -380,32 +352,6 @@ String _extractHour(String iso) {
     return hhmm;
   }
   return iso;
-}
-
-// Weather code -> asset mapper (WMO)
-String assetForWmoCode(int code, {bool isNight = false}) {
-  final night = isNight ? "_night" : "_day";
-
-  if ({0}.contains(code)) return "assets/icons/clear$night.png"; // Clear sky
-  if ({1, 2}.contains(code)) return "assets/icons/partly_cloudy$night.png";
-  if ({3}.contains(code)) return "assets/icons/cloudy$night.png";
-  if ({45, 48}.contains(code)) return "assets/icons/fog$night.png";
-  if ({51, 53, 55, 56, 57}.contains(code))
-    return "assets/icons/drizzle$night.png";
-  if ({61, 63, 65}.contains(code)) return "assets/icons/rain$night.png";
-  if ({66, 67}.contains(code)) return "assets/icons/freezing_rain$night.png";
-  if ({71, 73, 75}.contains(code)) return "assets/icons/snow$night.png";
-  if ({77}.contains(code)) return "assets/icons/snow_grains$night.png";
-  if ({80, 81, 82}.contains(code)) return "assets/icons/rain_shower$night.png";
-  if ({85, 86}.contains(code)) return "assets/icons/snow_shower$night.png";
-  if ({95}.contains(code)) return "assets/icons/thunder$night.png";
-  if ({96, 99}.contains(code)) return "assets/icons/thunder_hail$night.png";
-  return "assets/icons/unknown$night.png";
-}
-
-bool isNightNow(DateTime dt, {int nightStartHour = 19, int nightEndHour = 6}) {
-  final h = dt.hour;
-  return h >= nightStartHour || h < nightEndHour;
 }
 
 // Nested map safe getters
@@ -423,21 +369,6 @@ double? _asDouble(Map obj, List path) {
   return null;
 }
 
-int? _asInt(Map obj, List path) {
-  dynamic cur = obj;
-  for (final key in path) {
-    if (cur is Map && cur.containsKey(key)) {
-      cur = cur[key];
-    } else {
-      return null;
-    }
-  }
-  if (cur is int) return cur;
-  if (cur is num) return cur.toInt();
-  if (cur is String) return int.tryParse(cur);
-  return null;
-}
-
 List<double>? _asListDouble(Map obj, List path) {
   final list = _asList(obj, path);
   if (list == null) return null;
@@ -448,20 +379,6 @@ List<double>? _asListDouble(Map obj, List path) {
         return double.nan;
       })
       .where((e) => e.isFinite)
-      .toList();
-}
-
-List<int>? _asListInt(Map obj, List path) {
-  final list = _asList(obj, path);
-  if (list == null) return null;
-  return list
-      .map((e) {
-        if (e is int) return e;
-        if (e is num) return e.toInt();
-        if (e is String) return int.tryParse(e) ?? -999999;
-        return -999999;
-      })
-      .where((e) => e != -999999)
       .toList();
 }
 

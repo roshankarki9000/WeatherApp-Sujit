@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:weatherapp/homepage.dart';
+import 'package:weatherapp/Pages/forecast_page.dart';
 
 class Weather extends StatelessWidget {
   const Weather({super.key});
@@ -54,7 +54,7 @@ class Weather extends StatelessWidget {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => Homepage()),
+                  MaterialPageRoute(builder: (context) => CurrentWeatherPage()),
                 );
               },
 
