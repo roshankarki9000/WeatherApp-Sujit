@@ -75,6 +75,25 @@ Follow these steps in your terminal to get the project running:
 * No API keys, environment variables, or other credentials are required to run the application.
 
 ---
+---
+
+## 📸 Screenshots
+
+The following images demonstrate the application's adherence to the Figma design:
+
+### 1. Current and Hourly Forecast View
+
+![Current and Hourly Forecast Screen](assets/screenshot/1.png)
+
+### 2. 7-Day Forecast and Metrics View
+
+![7-Day Forecast, AQI, Sunrise/UV Index Screen](assets/screenshot/2.png)
+
+### 3. App Splash Screen
+
+![App Splash Screen](assets/screenshot/3.png)
+
+---
 
 ## 📧 Suggested Submission Email
 
@@ -111,4 +130,5 @@ Best regards,
 
 Sujit
 
+"# Weather-App" 
 "# Weather-App" 
