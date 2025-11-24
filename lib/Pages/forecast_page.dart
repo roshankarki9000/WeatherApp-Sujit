@@ -15,11 +15,26 @@ class CurrentWeatherPage extends ConsumerWidget {
 
     final textTheme = GoogleFonts.poppinsTextTheme(Theme.of(context).textTheme);
 
+    int _findCurrentHourIndex(List<String> hourlyTimes) {
+      final now = DateTime.now();
+
+      for (int i = 0; i < hourlyTimes.length; i++) {
+        try {
+          final hourDate = DateTime.parse(hourlyTimes[i]);
+          if (!hourDate.isBefore(now)) {
+            return i;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      return 0;
+    }
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: weatherAsync.when(
         data: (data) {
-          // Defensive parsing
           double? currentTemp = _asDouble(data, [
             "weather",
             "current",
@@ -39,34 +54,32 @@ class CurrentWeatherPage extends ConsumerWidget {
               ])?.firstOrNull;
           final location = data["location"]?.toString() ?? "—";
 
-          final hourlyTimes =
-              _asListString(data, [
-                "weather",
-                "hourly",
-                "time",
-              ])?.take(25).toList() ??
-              const [];
-          final hourlyTemp =
-              _asListDouble(data, [
-                "weather",
-                "hourly",
-                "temperature_2m",
-              ])?.take(25).toList() ??
+          // Get full hourly lists
+          final hourlyTimesAll =
+              _asListString(data, ["weather", "hourly", "time"]) ?? const [];
+          final hourlyTempsAll =
+              _asListDouble(data, ["weather", "hourly", "temperature_2m"]) ??
               const [];
 
-          // Formatted date
+          // Find current hour index and slice for next 24 hours
+          final currentHourIndex = _findCurrentHourIndex(hourlyTimesAll);
+          final hourlyTimes =
+              hourlyTimesAll.skip(currentHourIndex).take(24).toList();
+          final hourlyTemp =
+              hourlyTempsAll.skip(currentHourIndex).take(24).toList();
+
           final now = DateTime.now();
           final dayLabel = "Today";
-          final dateLabel = DateFormat("MMMM, d").format(now); // e.g., July, 21
+          final dateLabel = DateFormat("MMMM, d").format(now);
 
           return Container(
             decoration: const BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  Color(0xFF0B0D3B), // deep navy blue
-                  Color(0xFF3A1F87), // violet
-                  Color(0xFF8A2DD8), // purple-pink mix
-                  Color(0xFFE45BD8), // soft magenta near bottom
+                  Color(0xFF0B0D3B),
+                  Color(0xFF3A1F87),
+                  Color(0xFF8A2DD8),
+                  Color(0xFFE45BD8),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment(-0.9, 1.7),
@@ -76,20 +89,16 @@ class CurrentWeatherPage extends ConsumerWidget {
               child: Column(
                 children: [
                   const SizedBox(height: 12),
-                  // Top header illustration + temp block
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 24),
                     child: Column(
                       children: [
-                        // Optional top bar (time/icons are part of OS; we keep spacing)
                         const SizedBox(height: 8),
-                        // Weather icon
                         Image.asset(
                           'assets/images/weather_icon.png',
                           height: 120,
                         ),
                         const SizedBox(height: 12),
-                        // Temperature
                         Text(
                           currentTemp != null
                               ? "${currentTemp.round()}°"
@@ -104,9 +113,9 @@ class CurrentWeatherPage extends ConsumerWidget {
                         ),
                         const SizedBox(height: 6),
                         Text(
-                          "Precipitations",
+                          "Precipitation",
                           style: textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -118,8 +127,6 @@ class CurrentWeatherPage extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        // Middle illustration (house)
-                        // Replace with your asset; using same as top for placeholder
                         Image.asset(
                           'assets/images/winter_house.png',
                           height: 150,
@@ -127,8 +134,6 @@ class CurrentWeatherPage extends ConsumerWidget {
                       ],
                     ),
                   ),
-
-                  // Forecast card
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     child: _ForecastCard(
@@ -138,10 +143,7 @@ class CurrentWeatherPage extends ConsumerWidget {
                       hourlyTemps: hourlyTemp,
                     ),
                   ),
-
                   const Spacer(),
-
-                  // Bottom pill bar (static visual placeholder)
                   Padding(
                     padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
                     child: _BottomPillBar(),
@@ -187,12 +189,12 @@ class _ForecastCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -221,7 +223,7 @@ class _ForecastCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Divider(color: Colors.white.withOpacity(0.25), height: 1),
+          Divider(color: Colors.white.withValues(alpha: 0.25), height: 1),
           const SizedBox(height: 8),
           SizedBox(
             height: 108,
@@ -255,10 +257,6 @@ class _HourlyTile extends StatelessWidget {
 
     return Container(
       width: 70,
-      // decoration: BoxDecoration(
-      //   color: Colors.white.withOpacity(0.15),
-      //   borderRadius: BorderRadius.circular(16),
-      // ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -270,12 +268,11 @@ class _HourlyTile extends StatelessWidget {
               fontWeight: FontWeight.w600,
             ),
           ),
-          // Placeholder weather glyph (use your own asset or map by code)
           Icon(Icons.cloud, color: Colors.white, size: 24),
           Text(
             time,
             style: textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -289,13 +286,9 @@ class _BottomPillBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 56,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 18),
+      height: 20,
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(20)),
+      padding: const EdgeInsets.symmetric(horizontal: 5),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [

@@ -296,9 +296,12 @@ class ForecastPage extends ConsumerWidget {
           "Max: ${_fmtDeg(maxTemp)}   Min: ${_fmtDeg(minTemp)}",
           style:
               Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
               ) ??
-              TextStyle(color: Colors.white.withOpacity(0.9), fontSize: 14),
+              TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 14,
+              ),
         ),
       ],
     );
@@ -321,7 +324,8 @@ class ForecastPage extends ConsumerWidget {
       scrollDirection: Axis.horizontal,
       itemCount: itemCount,
       itemBuilder: (context, index) {
-        final day = getDayOfWeek(index);
+        final day = index == 0 ? "Today" : getDayOfWeek(index);
+
         final maxTemp = maxTemps[index];
         final minTemp = minTemps[index];
         final icon = getWeatherIcon(weatherCodes[index]);
@@ -335,10 +339,10 @@ class ForecastPage extends ConsumerWidget {
           decoration: BoxDecoration(
             color:
                 isActive
-                    ? Colors.white.withOpacity(0.25)
-                    : Colors.white.withOpacity(0.1),
+                    ? Colors.white.withValues(alpha: 0.25)
+                    : Colors.white.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(15),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -347,13 +351,13 @@ class ForecastPage extends ConsumerWidget {
                 icon,
                 style: TextStyle(
                   fontSize: 28,
-                  color: Colors.white.withOpacity(opacity),
+                  color: Colors.white.withValues(alpha: opacity),
                 ),
               ),
               Text(
-                "${maxTemp}° / ${minTemp}°",
+                "$maxTemp° / $minTemp°",
                 style: TextStyle(
-                  color: Colors.white.withOpacity(opacity),
+                  color: Colors.white.withValues(alpha: opacity),
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -361,7 +365,7 @@ class ForecastPage extends ConsumerWidget {
               Text(
                 day,
                 style: TextStyle(
-                  color: Colors.white.withOpacity(opacity * 0.8),
+                  color: Colors.white.withValues(alpha: opacity * 0.8),
                   fontSize: 13,
                 ),
               ),
@@ -376,7 +380,7 @@ class ForecastPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -430,7 +434,7 @@ class ForecastPage extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(

@@ -138,20 +138,26 @@ class HourlyForecastPage extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Divider(color: Colors.white.withOpacity(0.3), thickness: 1),
+            child: Divider(
+              color: Colors.white.withValues(alpha: 0.3),
+              thickness: 1,
+            ),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 10),
             child: Text(
               isToday ? "TODAY" : date.toUpperCase(),
               style: textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withOpacity(0.9),
+                color: Colors.white.withValues(alpha: 0.9),
                 fontWeight: FontWeight.bold,
               ),
             ),
           ),
           Expanded(
-            child: Divider(color: Colors.white.withOpacity(0.3), thickness: 1),
+            child: Divider(
+              color: Colors.white.withValues(alpha: 0.3),
+              thickness: 1,
+            ),
           ),
         ],
       ),
@@ -170,7 +176,9 @@ class HourlyForecastPage extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
       decoration: BoxDecoration(
         color:
-            isCurrentHour ? Colors.white.withOpacity(0.15) : Colors.transparent,
+            isCurrentHour
+                ? Colors.white.withValues(alpha: 0.15)
+                : Colors.transparent,
         borderRadius: BorderRadius.circular(8),
       ),
       child: Row(
@@ -197,7 +205,7 @@ class HourlyForecastPage extends StatelessWidget {
                 Text(
                   description,
                   style: textTheme.bodyLarge?.copyWith(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                   ),
                 ),
               ],

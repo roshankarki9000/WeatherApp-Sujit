@@ -117,7 +117,7 @@ class CurrentWeatherPage extends ConsumerWidget {
                         Text(
                           "Precipitations",
                           style: textTheme.titleMedium?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -125,7 +125,7 @@ class CurrentWeatherPage extends ConsumerWidget {
                         Text(
                           "Max: ${_fmtDeg(maxTemp)}   Min: ${_fmtDeg(minTemp)}",
                           style: textTheme.titleSmall?.copyWith(
-                            color: Colors.white.withOpacity(0.9),
+                            color: Colors.white.withValues(alpha: 0.9),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -205,12 +205,12 @@ class _ForecastCard extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1),
+        color: Colors.white.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 20,
             offset: const Offset(0, 10),
           ),
@@ -239,7 +239,7 @@ class _ForecastCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          Divider(color: Colors.white.withOpacity(0.25), height: 1),
+          Divider(color: Colors.white.withValues(alpha: 0.25), height: 1),
           const SizedBox(height: 8),
           SizedBox(
             height: 108,
@@ -289,7 +289,7 @@ class _HourlyTile extends StatelessWidget {
     return Container(
       width: 78,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
+        color: Colors.white.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -307,7 +307,7 @@ class _HourlyTile extends StatelessWidget {
           Text(
             time,
             style: textTheme.bodySmall?.copyWith(
-              color: Colors.white.withOpacity(0.9),
+              color: Colors.white.withValues(alpha: 0.9),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -323,9 +323,9 @@ class _BottomPillBar extends StatelessWidget {
     return Container(
       height: 56,
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.12),
+        color: Colors.white.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
       ),
       padding: const EdgeInsets.symmetric(horizontal: 18),
       child: const Row(
@@ -390,8 +390,9 @@ String assetForWmoCode(int code, {bool isNight = false}) {
   if ({1, 2}.contains(code)) return "assets/icons/partly_cloudy$night.png";
   if ({3}.contains(code)) return "assets/icons/cloudy$night.png";
   if ({45, 48}.contains(code)) return "assets/icons/fog$night.png";
-  if ({51, 53, 55, 56, 57}.contains(code))
+  if ({51, 53, 55, 56, 57}.contains(code)) {
     return "assets/icons/drizzle$night.png";
+  }
   if ({61, 63, 65}.contains(code)) return "assets/icons/rain$night.png";
   if ({66, 67}.contains(code)) return "assets/icons/freezing_rain$night.png";
   if ({71, 73, 75}.contains(code)) return "assets/icons/snow$night.png";
